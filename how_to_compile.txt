@@ -1,0 +1,26 @@
+MS Windows Compile Instructions:
+
+* Download this: http://blog.zakkemble.co.uk/download/avr-gcc-8.1.0-x86-mingw.zip
+- Extract as a directoy called "avr-gcc" in C:\Projects\
+
+* Download this: http://gnuwin32.sourceforge.net/downlinks/coreutils-bin-zip.php
+- Extract as a directory called "coreutils" in C:\Projects\
+
+* Download this: http://gnuwin32.sourceforge.net/downlinks/libintl-bin-zip.php
+- From the archive, take bin/libintl3.dll and drop it into the C:\Projects\coreutils\bin\ directory
+
+* Download this: http://gnuwin32.sourceforge.net/downlinks/libiconv-bin-zip.php
+- From the archive, take bin/libcharset1.dll and drop it into the C:\Projects\coreutils\bin\ directory
+- From the archive, take bin/libiconv2.dll and drop it into the C:\Projects\coreutils\bin\ directory
+
+* Run setpath.bat from this directory
+* Now run 'make'
+
+You can use a directory other than C:\Projects\ if desired, just make sure the path does not contain any spaces.
+Also update 'setpath.bat' with the new directory.
+
+Linux Compile Instructions:
+
+* Install AVR-GCC through your favourite package manager
+* Edit 'Makefile' and remove the line "COREUTILS  = C:/Projects/coreutils/bin/"
+* Run 'make'
