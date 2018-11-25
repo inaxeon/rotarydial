@@ -96,9 +96,6 @@ int main(void)
     init();
     dtmf_init();
 
-    // Turn PWM OFF
-    dtmf_generate_tone(DIGIT_OFF, 0); 
-
     // Local dial status variables 
     rs->state = STATE_DIAL;
     rs->dial_pin_state = true;
@@ -357,12 +354,12 @@ ISR(INT0_vect)
 ISR(PCINT0_vect)
 {
     // Do nothing, just wake up MCU
-    _delay_us(100);
+    _delay_us(1);
 }
 
 // Handler for any unspecified 'bad' interrupts
 ISR(BADISR_vect)
 {
     // Do nothing, just wake up MCU
-    _delay_us(100);
+    _delay_us(1);
 }
