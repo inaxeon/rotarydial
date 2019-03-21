@@ -17,7 +17,7 @@ CLOCK      = 4000000
 PROGRAMMER = -c stk500 -P COM10 
 SRCS       = main.c dtmf.c
 OBJS       = $(SRCS:.c=.o)
-FUSES      = -U lfuse:w:0xCC:m -U hfuse:w:0xDF:m -U efuse:w:0xFF:m
+FUSES      = -U lfuse:w:0xFD:m -U hfuse:w:0xDF:m -U efuse:w:0xFF:m
 DEPDIR     = deps
 DEPFLAGS   = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 RM         = rm

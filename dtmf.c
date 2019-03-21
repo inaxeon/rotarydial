@@ -32,7 +32,6 @@
 #define TIMER_PRESCALE_MASK0        0x07    ///< Timer Prescaler Bit-Mask
 #define NUM_SAMPLES                 128     // Number of samples in lookup table
 
-#define PIN_PWM_OUT                 PB0     // PB0 (OC0A) as PWM output
 
 static void dtmf_enable_pwm(void);
 
@@ -127,7 +126,7 @@ void dtmf_init(void)
     TCCR0B = TIMER_PRESCALE_MASK0 & TIMER_CLK_DIV1;
     TCNT0 = 0;
     OCR0A = 0;
-    DDRB = _BV(PIN_PWM_OUT);    // PWM output (OC0A pin)
+    DDRB |= _BV(PIN_PWM_OUT);    // PWM output (OC0A pin)
 
     _g_stepwidth_a = 0x00;
     _g_stepwidth_b = 0x00;

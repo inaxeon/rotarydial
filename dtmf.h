@@ -37,6 +37,8 @@
 // PWM frequency = 4Mhz/256 = 15625Hz; overflow cycles per MS = 15
 #define T0_OVERFLOW_PER_MS  15
 
+#define PIN_PWM_OUT         PB0     // PB0 (OC0A) as PWM output
+
 void dtmf_init(void);
 void dtmf_generate_tone(int8_t digit, uint16_t duration_ms);
 void sleep_ms(uint16_t msec);
