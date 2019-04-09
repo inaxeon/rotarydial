@@ -35,7 +35,7 @@
 #define PIN_DIAL                    PB1
 #define PIN_PULSE                   PB2
 
-#define SPEED_DIAL_SIZE             30
+#define SPEED_DIAL_SIZE             32
 
 #define STATE_DIAL                  0x00
 #define STATE_SPECIAL_L1            0x01
@@ -48,7 +48,8 @@
 #define F_WDT_AWAKE                 0x04
 
 #define SLEEP_64MS                  0x00
-#define SLEEP_2S                    0x01
+#define SLEEP_128MS                 0x01
+#define SLEEP_2S                    0x02
 
 #define SPEED_DIAL_COUNT            8 // 8 Positions in total (Redail(3),4,5,6,7,8,9,0)
 #define SPEED_DIAL_REDIAL           (SPEED_DIAL_COUNT - 1)
@@ -100,18 +101,13 @@ int main(void)
     bool dial_pin_prev_state;
 
     init();
-    dtmf_init();
 
     // Wait for the decoupling capacitors to charge
-#if 0
-    DDRB &= ~_BV(PIN_PWM_OUT);
-    dtmf_generate_tone(0, 200);
-    DDRB |= _BV(PIN_PWM_OUT);
-#else
-    wdt_timer_start(SLEEP_64MS);
+    wdt_timer_start(SLEEP_128MS);
     start_sleep();
     wdt_stop();
-#endif
+
+    dtmf_init();
 
     // Local dial status variables 
     rs->state = STATE_DIAL;
@@ -161,7 +157,8 @@ int main(void)
                     if (rs->dialed_digit == 10)
                         rs->dialed_digit = 0; // 10 pulses => 0
 
-                    // Kill the WDT. Don't need it.
+                    wdt_timer_start(SLEEP_128MS);
+                    start_sleep();
                     wdt_stop();
 
                     process_dialed_digit(rs);
@@ -352,7 +349,7 @@ static void init(void)
     // Write prescaler value with CLKPCE = 0
     CLKPR = 0;
 
-    // Disable Pull-ups - external HW debounce
+    // Enable pull-ups
     PORTB |= (_BV(PIN_DIAL) | _BV(PIN_PULSE));
 
     // Disable unused modules to save power
@@ -378,6 +375,9 @@ static void wdt_timer_start(uint8_t delay)
     {
         case SLEEP_64MS:
             WDTCR = _BV(WDIE) | _BV(WDP1);
+            break;
+        case SLEEP_128MS:
+            WDTCR = _BV(WDIE) | _BV(WDP1) | _BV(WDP0);
             break;
         case SLEEP_2S:
             WDTCR = _BV(WDIE) | _BV(WDP0) | _BV(WDP1) | _BV(WDP2); // 2048ms
