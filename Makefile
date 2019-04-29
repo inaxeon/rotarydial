@@ -29,7 +29,7 @@ POSTCOMPILE = $(MV) $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
 COMPILE = avr-gcc -Wall -Os $(DEPFLAGS) -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
 
-all: main.hex
+all: rotarydial.hex
 
 .c.o: $(DEPDIR)/%.d
 	@$(MKDIR) -p $(DEPDIR)
@@ -47,7 +47,7 @@ all: main.hex
 	@$(POSTCOMPILE)
 
 flash: all
-	$(AVRDUDE) -U flash:w:main.hex:i
+	$(AVRDUDE) -U flash:w:rotarydial.hex:i
 
 fuse:
 	$(AVRDUDE) $(FUSES)
@@ -55,17 +55,17 @@ fuse:
 install: flash fuse
 
 clean:
-	$(RM) -f main.hex main.elf $(OBJS)
+	$(RM) -f rotarydial.hex rotarydial.elf $(OBJS)
 	$(RM) -rf deps
 
-main.elf: $(OBJS)
-	$(COMPILE) -o main.elf $(OBJS)
+rotarydial.elf: $(OBJS)
+	$(COMPILE) -o rotarydial.elf $(OBJS)
 
-main.hex: main.elf
-	avr-objcopy -j .text -j .data -O ihex main.elf main.hex
+rotarydial.hex: rotarydial.elf
+	avr-objcopy -j .text -j .data -O ihex rotarydial.elf rotarydial.hex
 
-disasm:	main.elf
-	avr-objdump -d main.elf
+disasm:	rotarydial.elf
+	avr-objdump -d rotarydial.elf
 
 cpp:
 	$(COMPILE) -E $(SRCS)

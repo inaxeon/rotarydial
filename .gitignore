@@ -1,5 +1,5 @@
-*.hex
 *.elf
 *.o
+*.bin
 deps/
 

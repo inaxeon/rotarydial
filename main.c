@@ -21,6 +21,9 @@
 //
 //*****************************************************************************
 
+// Uncomment to build with reverse dial
+//#define NZ_DIAL
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <avr/io.h>
@@ -156,6 +159,12 @@ int main(void)
                     // Got a valid digit - process it            
                     if (rs->dialed_digit == 10)
                         rs->dialed_digit = 0; // 10 pulses => 0
+
+#ifdef NZ_DIAL
+                    // NZPO Phones only. 0 is same as GPO but 1-9 are reversed.
+                    if (rs->dialed_digit >= 1 && rs->dialed_digit <= 9)
+                        rs->dialed_digit = (10 - rs->dialed_digit);
+#endif
 
                     wdt_timer_start(SLEEP_128MS);
                     start_sleep();
