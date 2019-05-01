@@ -22,7 +22,7 @@
 //*****************************************************************************
 
 // Uncomment to build with reverse dial
-#define NZ_DIAL
+//#define NZ_DIAL
 
 #include <stdbool.h>
 #include <stdint.h>
