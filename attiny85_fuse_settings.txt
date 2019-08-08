@@ -1,0 +1,5 @@
+Correctly set fuse bytes:
+
+LFUSE: 0xFD
+HFUSE: 0xDF
+EFUSE: 0xFF
