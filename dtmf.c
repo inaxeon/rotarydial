@@ -184,6 +184,18 @@ void dtmf_generate_tone(int8_t digit, uint16_t duration_ms)
         _g_stepwidth_a = 51;    // G=784Hz
         sleep_ms(duration_ms / 3);
     }
+	    else if (digit == DIGIT_TUNE_ASC2)
+    {
+        _g_stepwidth_a = 85;    // 1300Hz  
+        _g_stepwidth_b = 0;
+        dtmf_enable_pwm();
+        
+        sleep_ms(duration_ms / 6);
+        _g_stepwidth_a = 98;    // 1500Hz
+        sleep_ms(duration_ms / 6);
+        _g_stepwidth_a = 111;    // 1700Hz
+        sleep_ms(duration_ms / 6);
+    }
     else if (digit == DIGIT_TUNE_DESC)
     {
         _g_stepwidth_a = 51;    // G=784Hz
@@ -195,6 +207,18 @@ void dtmf_generate_tone(int8_t digit, uint16_t duration_ms)
         sleep_ms(duration_ms / 3);
         _g_stepwidth_a = 34;    // C=523.25Hz  
         sleep_ms(duration_ms / 3);
+    }
+    else if (digit == DIGIT_TUNE_DESC2)
+    {
+        _g_stepwidth_a = 111;    // 1700Hz
+        _g_stepwidth_b = 0;
+        dtmf_enable_pwm();
+
+        sleep_ms(duration_ms / 6);
+        _g_stepwidth_a = 98;    // 1500Hz
+        sleep_ms(duration_ms / 6);
+        _g_stepwidth_a = 85;    // 1300Hz   
+        sleep_ms(duration_ms / 6);
     }
 
     // Stop DTMF transmitting
