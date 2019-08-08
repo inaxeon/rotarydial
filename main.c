@@ -14,6 +14,13 @@
 //                Cleaned up implementation, modified to work more like the
 //                Rotatone commercial product.
 //
+// Modified     : Donald Froula 2019-07-28
+//                http://projectmf.homelinux.com/pulsetotone
+//                Fixed not returning to normal dialing mode after * or # dialing or redial function.
+//                Added support for storing * and # in both redial and speed dial memories.
+//                Added blue box and hotline modes and EEPROM feature setting storage, tone mode stored in memories
+//                Added programmable digit length and hotdelay delay, EEPROM saved
+//
 // This code is distributed under the GNU Public License
 // which can be found at http://www.gnu.org/licenses/gpl.txt
 //
@@ -38,7 +45,7 @@
 #define PIN_DIAL                    PB1
 #define PIN_PULSE                   PB2
 
-#define SPEED_DIAL_SIZE             32
+#define SPEED_DIAL_SIZE             33
 
 #define STATE_DIAL                  0x00
 #define STATE_SPECIAL_L1            0x01
@@ -52,14 +59,29 @@
 
 #define SLEEP_64MS                  0x00
 #define SLEEP_128MS                 0x01
-#define SLEEP_2S                    0x02
+#define SLEEP_500MS                 0x02
+#define SLEEP_1S                    0x03
+#define SLEEP_2S                    0x04
 
-#define SPEED_DIAL_COUNT            8 // 8 Positions in total (Redail(3),4,5,6,7,8,9,0)
+#define SPEED_DIAL_COUNT            8 // 8 Positions in total (Redial(3),4,5,6,7,8,9,0)
 #define SPEED_DIAL_REDIAL           (SPEED_DIAL_COUNT - 1)
 
 #define L2_STAR                     1
 #define L2_POUND                    2
 #define L2_REDIAL                   3
+
+#define MODE_DTMF                   0 
+#define MODE_MF                     1 
+#define MF_OFFSET                   13
+
+#define FEAT_HOTLINE                0  //Bit position, not value
+#define FEAT_BLUEBOX                1  //Bit position, not value
+
+#define DTMF_DURATION_UNIT          50   //Base unit of DTMF duration in milliseconds
+
+#define FEAT_EE                     511  //Storage for feature flag - last location in EEPROM
+#define HOTLINE_DELAY_EE            510  //Storage for hotline delay
+#define DTMF_DURATION_EE            509  //Storage for DTMF duration
 
 typedef struct
 {
@@ -71,6 +93,14 @@ typedef struct
     int8_t speed_dial_digits[SPEED_DIAL_SIZE];
     int8_t dialed_digit;
 } runstate_t;
+
+int8_t pending_digit = 0;      //(DRF) Stores * or # for injecting into main loop after dialing so they are picked up by the redial and programming functions.
+int8_t prev_state;             //(DRF) Keeps track of the previous state whenever a state change occurs.
+int8_t tone_mode = MODE_DTMF;  //(DRF) Default tone mode is DTMF
+int8_t prev_tone_mode;       
+uint8_t feature_flags = 0;     //(DRF) Feature flags
+uint8_t hotline_delay = 1;     //(DRF) Actual delay is 1000ms * this value, 1 second default
+uint8_t dtmf_duration = 2;     //(DRF) DTMF tone and space duration * 50 milliseconds (default 100ms)
 
 static void init(void);
 static void process_dialed_digit(runstate_t *rs);
@@ -116,15 +146,56 @@ int main(void)
     rs->state = STATE_DIAL;
     rs->dial_pin_state = true;
     rs->flags = F_NONE;
-    rs->speed_dial_digit_index = 0;
+    rs->speed_dial_digit_index = 1;   //Start after tone mode, which is saved at index 0.
     rs->speed_dial_index = 0;
     dial_pin_prev_state = true;
     
-    for (uint8_t i = 0; i < SPEED_DIAL_SIZE; i++)
+	//Initialize the local dial memory
+	rs->speed_dial_digits[0] = MODE_DTMF;   //Save DTMF tone mode in first location - No redial storage in MF mode
+    for (uint8_t i = 1; i < SPEED_DIAL_SIZE; i++)
         rs->speed_dial_digits[i] = DIGIT_OFF;
+	
+		
+	//(DRF)Retrieve feature flags
+    feature_flags = eeprom_read_byte((uint8_t*)FEAT_EE);
+	
+	//Initialize EEPROM location, if needed
+	if(feature_flags > ((1 << FEAT_HOTLINE) | (1 << FEAT_BLUEBOX))){
+	feature_flags = 0;
+	eeprom_write_byte((uint8_t*)FEAT_EE, feature_flags);
+	}
+	
+	//Retrieve hotline delay
+	hotline_delay = eeprom_read_byte((uint8_t*)HOTLINE_DELAY_EE);
+	
+	//Initialize EEPROM location, if needed
+	if((hotline_delay > 4) || (hotline_delay < 1)){
+	hotline_delay = 1;
+	eeprom_write_byte((uint8_t*)HOTLINE_DELAY_EE, hotline_delay);
+	} 
+	
+	//Retrieve DTMF duration
+	dtmf_duration = eeprom_read_byte((uint8_t*)DTMF_DURATION_EE);
+	
+	//Initialize EEPROM location, if needed
+	if((dtmf_duration > 4) || (dtmf_duration < 1)){
+		dtmf_duration = 2;      //* Initialize to 100ms
+		eeprom_write_byte((uint8_t*)DTMF_DURATION_EE, dtmf_duration);
+		} 
+	
+    //(DRF)Set tone mode to DTMF for hotline feature
+	tone_mode = MODE_DTMF;
+	
+	//(DRF)For Hotline operation, dial location zero on powerup if enabled
+	if(feature_flags & (1 << FEAT_HOTLINE)){sleep_ms(hotline_delay * 1000); dial_speed_dial_number(rs->speed_dial_digits, _g_speed_dial_loc[0]);}
+	
+	 //(DRF)Set tone mode according to stored feature flag now that hotline feature is done
+	if(feature_flags & (1 << FEAT_BLUEBOX)){tone_mode = MODE_MF;} else{tone_mode = MODE_DTMF;}
+		
 
     while (1)
-    {
+    {	
+		
         rs->dial_pin_state = bit_is_set(PINB, PIN_DIAL);
 
         if (dial_pin_prev_state != rs->dial_pin_state) 
@@ -143,6 +214,7 @@ int main(void)
             {
                 // Disable SF detection (should be already disabled)
                 rs->flags = F_NONE;
+				
 
                 // Check that we detect a valid digit
                 if (rs->dialed_digit <= 0 || rs->dialed_digit > 10)
@@ -177,7 +249,8 @@ int main(void)
             if (rs->dial_pin_state) 
             {
                 // Rotary dial at the rest position
-                // Reset all variables
+                // Reset all variablesrs->state
+				prev_state = rs->state;
                 rs->state = STATE_DIAL;
                 rs->flags = F_NONE;
                 rs->dialed_digit = DIGIT_OFF;
@@ -185,6 +258,9 @@ int main(void)
         }
 
         dial_pin_prev_state = rs->dial_pin_state;
+		
+		//(DRF) If a pending * or # or 2600 digit has been saved, play it immediately after returning to normal dial mode
+		if(pending_digit){rs->dialed_digit = pending_digit; pending_digit = 0; process_dialed_digit(rs);}
 
         // Don't power down if special function detection is active        
         if (rs->flags & F_DETECT_SPECIAL_L1)
@@ -198,6 +274,7 @@ int main(void)
             {
                 // SF mode detected
                 rs->flags &= ~F_WDT_AWAKE;
+				prev_state = rs->state;
                 rs->state = STATE_SPECIAL_L1;
                 rs->flags &= ~F_DETECT_SPECIAL_L1;
                 rs->flags |= F_DETECT_SPECIAL_L2;
@@ -216,6 +293,7 @@ int main(void)
             {
                 // SF mode detected
                 rs->flags &= ~F_WDT_AWAKE;
+				prev_state = rs->state;
                 rs->state = STATE_SPECIAL_L2;
                 rs->flags &= ~F_DETECT_SPECIAL_L2;
 
@@ -240,15 +318,19 @@ static void process_dialed_digit(runstate_t *rs)
     {
         // Standard (no speed dial, no special function) mode
         // Generate DTMF code
-        dtmf_generate_tone(rs->dialed_digit, DTMF_DURATION_MS);
+		//(DRF) Add MF tone capability
+		if (tone_mode == MODE_MF){dtmf_generate_tone(rs->dialed_digit + MF_OFFSET, dtmf_duration * DTMF_DURATION_UNIT);}
+        else {dtmf_generate_tone(rs->dialed_digit, dtmf_duration * DTMF_DURATION_UNIT);}
 
         if (rs->speed_dial_digit_index < SPEED_DIAL_SIZE)
         {
+			if(tone_mode == MODE_DTMF){  //Only save to redial if in DTMF mode
             // During regular dial always save into the 'Redial' position of the speed dial memory
             rs->speed_dial_digits[rs->speed_dial_digit_index] = rs->dialed_digit;
             rs->speed_dial_digit_index++;
             
             write_current_speed_dial(rs->speed_dial_digits, SPEED_DIAL_REDIAL);
+			}
         }
     }
     else if (rs->state == STATE_SPECIAL_L1)
@@ -256,48 +338,118 @@ static void process_dialed_digit(runstate_t *rs)
         if (rs->dialed_digit == L2_STAR)
         {
             // SF 1-*
-            dtmf_generate_tone(DIGIT_STAR, DTMF_DURATION_MS);  
+            //dtmf_generate_tone(DIGIT_STAR, dtmf_duration * DTMF_DURATION_UNIT);  
+			pending_digit = DIGIT_STAR;   //(DRF) Just push the tone to the pending_digit variable to be played immediately when returned to STATE_DIAL
         }
         else if (rs->dialed_digit == L2_POUND)
         {
             // SF 2-#
-            dtmf_generate_tone(DIGIT_POUND, DTMF_DURATION_MS);  
+            //dtmf_generate_tone(DIGIT_POUND, dtmf_duration * DTMF_DURATION_UNIT);  
+			pending_digit = DIGIT_POUND;  //(DRF) Just push the tone to the pending_digit variable to be played immediately when returned to STATE_DIAL
         }
         else if (rs->dialed_digit == L2_REDIAL)
         {
             // SF 3 (Redial)
-            dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL);
+			//(DRF) Add MF tone capability
+			if (tone_mode == MODE_MF){pending_digit = DIGIT_PRE2600;}   //No redial function in MF mode. Play 2600 instead
+		    else{dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL);}
         }
         else if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
         {
             // Call speed dial number
             dial_speed_dial_number(rs->speed_dial_digits, _g_speed_dial_loc[rs->dialed_digit]);
         }
+		rs->state = prev_state;  //(DRF) Return to the previous state after entering STATE_SPECIAL_L1. Allows normal dialing after using 
+		                         //special functions, not possible before the fix. Also allows * and # to be programmed into speed dial,
+								 //returning to programming mode if a * or # is dialed while programming.
     }
     else if (rs->state == STATE_SPECIAL_L2)
     {
         if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
         {
-            rs->speed_dial_index = _g_speed_dial_loc[rs->dialed_digit];
-            rs->speed_dial_digit_index = 0;
-
-            for (uint8_t i = 0; i < SPEED_DIAL_SIZE; i++)
+            rs->speed_dial_index = _g_speed_dial_loc[rs->dialed_digit];   //Set the speed dial memory slot to dialed number
+            rs->speed_dial_digit_index = 1;         //Reset dialed digits buffer pointer
+			rs->speed_dial_digits[0] = tone_mode;   //Save current tone mode in first location
+            for (uint8_t i = 1; i < SPEED_DIAL_SIZE; i++)  //Initialize the digits buffer
                 rs->speed_dial_digits[i] = DIGIT_OFF;
-
+            prev_state = rs->state;
             rs->state = STATE_PROGRAM_SD;
-        }
-        else
-        {
-            // Not a speed dial position. Revert back to ordinary dial        
+        }      
+		//(DRF) Add hotline capability. 				
+        else if(rs->dialed_digit == 1){
+			//Set Hotline flag and cycle through delays
+			if(feature_flags & (1 << FEAT_HOTLINE)){  //If feature is "on"...
+			    hotline_delay += 1;  //Increase the delay by one second
+			    if(hotline_delay > 4){
+				   hotline_delay = 1;				
+				   feature_flags &= ~(1 << FEAT_HOTLINE);  //Turn off the hotline feature if more than 4 seconds
+				   dtmf_generate_tone(DIGIT_TUNE_DESC2, 800);
+				   }
+				 else{
+					 for(int i=1; i<=hotline_delay; i++){ //Beep out number of seconds set
+						 dtmf_generate_tone(DIGIT_BEEP_LOW, 200); 
+						 sleep_ms(200);
+						 } //Beep out number of seconds set
+				     }
+			}
+			else {  //If hotline feature is off
+				feature_flags |= (1 << FEAT_HOTLINE); //Turn it on
+				for(int i=1; i<=hotline_delay; i++){
+					if(i == 1){dtmf_generate_tone(DIGIT_TUNE_ASC2, 800); sleep_ms(200);}
+					dtmf_generate_tone(DIGIT_BEEP_LOW, 200); 
+					sleep_ms(200);
+					} //Beep out number of seconds set
+				}
+			eeprom_write_byte((uint8_t*)FEAT_EE,feature_flags);		
+			eeprom_write_byte((uint8_t*)HOTLINE_DELAY_EE, hotline_delay);
+			prev_state = rs->state;
             rs->state = STATE_DIAL;
-        }
+			   }
+			//(DRF) Add DTMF duration setting capability.
+			else if(rs->dialed_digit == 2){
+			//Cycle through DTMF duration settings in 50ms steps
+			    dtmf_duration += 1;  //Increase the duration by 50ms
+			    if(dtmf_duration > 4){dtmf_duration = 1;}
+                for(int i=1; i<=dtmf_duration; i++){ //Beep out number of 50ms units set
+						 dtmf_generate_tone(DIGIT_BEEP, 200); 
+						 sleep_ms(200);
+						 } 			   
+			eeprom_write_byte((uint8_t*)DTMF_DURATION_EE, dtmf_duration);
+			prev_state = rs->state;
+            rs->state = STATE_DIAL;
+			}
+		    //(DRF) Add MF tone capability. If entering program mode on Digit 1, toggle DTMF/MF tone mode	
+			else if(rs->dialed_digit == 3){
+		    //Toggle Bluebox flag
+			if(feature_flags & (1 << FEAT_BLUEBOX)){  //If feature is "on"...
+				feature_flags &= ~(1 << FEAT_BLUEBOX); 
+				tone_mode = MODE_DTMF; 
+				dtmf_generate_tone(DIGIT_TUNE_DESC2, 800);
+				} 
+			else {
+				 feature_flags |= (1 << FEAT_BLUEBOX); 
+				  tone_mode = MODE_MF; 
+				  dtmf_generate_tone(DIGIT_TUNE_ASC2, 800);
+				  }
+				eeprom_write_byte((uint8_t*)FEAT_EE,feature_flags);
+				prev_state = rs->state;
+                rs->state = STATE_DIAL;
+			}
+			else{
+		    // Not a speed dial position. Revert back to ordinary dial
+            prev_state = rs->state;			
+            rs->state = STATE_DIAL;
+			}
     }
+	
+	
     else if (rs->state == STATE_PROGRAM_SD)
     {
         // Do we have too many digits entered?
         if (rs->speed_dial_digit_index >= SPEED_DIAL_SIZE)
         {
             // Exit speed dial mode
+			prev_state = rs->state;
             rs->state = STATE_DIAL;
             // Beep to indicate that we done
             dtmf_generate_tone(DIGIT_TUNE_DESC, 800);
@@ -309,7 +461,7 @@ static void process_dialed_digit(runstate_t *rs)
             rs->speed_dial_digit_index++;
 
             // Generic beep - do not gererate DTMF code
-            dtmf_generate_tone(DIGIT_BEEP_LOW, DTMF_DURATION_MS);
+            dtmf_generate_tone(DIGIT_BEEP_LOW, dtmf_duration * DTMF_DURATION_UNIT);
         }
 
         // Write SD on every digit so user can hang up to save
@@ -323,20 +475,31 @@ static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index)
     if (index >= 0 && index < SPEED_DIAL_COUNT)
     {
         eeprom_read_block(speed_dial_digits, &_g_speed_dial_eeprom[index][0], SPEED_DIAL_SIZE);
-
-        for (uint8_t i = 0; i < SPEED_DIAL_SIZE; i++)
+		
+		prev_tone_mode = tone_mode;         //Save current tone mode
+        tone_mode = speed_dial_digits[0];   //Set saved tone mode as active
+        for (uint8_t i = 1; i < SPEED_DIAL_SIZE; i++)
         {
             // Dial the number
             // Skip dialing invalid digits
-            if (speed_dial_digits[i] >= 0 && speed_dial_digits[i] <= DIGIT_POUND)
+			//(DRF) Add MF tone capability
+            if (speed_dial_digits[i] >= 0 && speed_dial_digits[i] <= DIGIT_PRE2600)
             {
-                dtmf_generate_tone(speed_dial_digits[i], DTMF_DURATION_MS);  
-                // Pause between DTMF tones
-                sleep_ms(DTMF_DURATION_MS);    
+				//(DRF) Add MF tone capability
+				//if (tone_mode == MODE_DTMF && speed_dial_digits[i] == DIGIT_PRE2600){i++;}  //Skip saved 2600 if in DTMF mode
+                if(tone_mode == MODE_MF){dtmf_generate_tone(speed_dial_digits[i] + MF_OFFSET, dtmf_duration * DTMF_DURATION_UNIT);}
+                else {dtmf_generate_tone(speed_dial_digits[i], dtmf_duration * DTMF_DURATION_UNIT);}  
+				//(DRF)Add MF support
+				if(tone_mode == MODE_MF){
+					if(speed_dial_digits[i] == DIGIT_PRE2600){sleep_ms(DURATION_MS_2600);} else{sleep_ms(dtmf_duration * DTMF_DURATION_UNIT);}
+				    }
+                else{sleep_ms(dtmf_duration * DTMF_DURATION_UNIT);}   
             }
         }
+		tone_mode = prev_tone_mode;   //Restore tone mode from value saved in speed dial
     }
 }
+
 
 static void write_current_speed_dial(int8_t *speed_dial_digits, int8_t index)
 {
@@ -385,6 +548,11 @@ static void wdt_timer_start(uint8_t delay)
             break;
         case SLEEP_128MS:
             WDTCR = _BV(WDIE) | _BV(WDP1) | _BV(WDP0);
+            break;
+        case SLEEP_500MS:
+            WDTCR = _BV(WDIE) | _BV(WDP0) | _BV(WDP2); // 500ms
+		case SLEEP_1S:
+            WDTCR = _BV(WDIE) | _BV(WDP1) | _BV(WDP2); // 1024ms
             break;
         case SLEEP_2S:
             WDTCR = _BV(WDIE) | _BV(WDP0) | _BV(WDP1) | _BV(WDP2); // 2048ms
