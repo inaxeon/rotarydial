@@ -91,13 +91,40 @@ const uint8_t auc_sin_param[NUM_SAMPLES] = {
 // 852hz  ---> x_SW = 56
 // 941hz  ---> x_SW = 61
 //
+//MF Frequencies
+//700hz   ---> x_SW = 46
+//900hz   ---> x_SW = 59
+//1100hz  ---> x_SW = 72
+//1300hz  ---> x_SW = 85
+//1500hz  ---> x_SW = 98
+//1700hz  ---> x_SW = 111
+//
+//Trunk Seize Frequency
+//2600hz  ---> x_SW = 170
+//
 //      | 1209 | 1336 | 1477 | 1633
 //  697 |   1  |  2   |   3  |   A
 //  770 |   4  |  5   |   6  |   B
 //  852 |   7  |  8   |   9  |   C
 //  941 |   *  |  0   |   #  |   D
+//
+//Digit 0	85	98
+//Digit 1	46	59
+//Digit 2	46	72
+//Digit 3	59	72
+//Digit 4	46	85
+//Digit 5	59	85
+//Digit 6	72	85
+//Digit 7	46	98
+//Digit 8	59	98
+//Digit 9	72	98
+//KP	    72	111
+//ST    	98	111
 
-const uint8_t auc_frequency[12][2] =
+//2600 Seizure 170  170
+
+
+const uint8_t auc_frequency[26][2] =
 {
     { 87, 61 }, // 0
     { 79, 46 }, // 1
@@ -111,9 +138,26 @@ const uint8_t auc_frequency[12][2] =
     { 96, 56 }, // 9
     { 79, 61 }, // *
     { 96, 61 }, // #
+	
+	{ 0, 0   },   // # Placeholder for DIGIT_PRE2600
+
+    { 85, 98 },  // 0
+    { 46, 59 },  // 1
+    { 46, 72 },  // 2
+    { 59, 72 },  // 3
+    { 46, 85 },  // 4
+    { 59, 85 },  // 5
+    { 72, 85 },  // 6
+    { 46, 98 },  // 7
+    { 59, 98 },  // 8
+    { 72, 98 },  // 9
+    { 72, 111 }, // KP
+    { 98, 111 }, // ST
+	
+    { 170, 0 }, // 2600
 };
 
-volatile uint32_t _g_delay_counter;         // Delay counter for sleep function
+volatile uint32_t _g_delay_counter;             // Delay counter for sleep function
 volatile uint8_t _g_stepwidth_a;                // step width of high frequency
 volatile uint8_t _g_stepwidth_b;                // step width of low frequency
 volatile uint16_t _g_cur_sin_val_a;             // position freq. A in LUT (extended format)
@@ -142,7 +186,7 @@ void dtmf_generate_tone(int8_t digit, uint16_t duration_ms)
 {
     GIMSK = 0; 
 
-    if (digit >= 0 && digit <= DIGIT_POUND)
+    if (digit >= 0 && digit <= DIGIT_2600)
     {
         // Standard digits 0-9, *, #
         _g_stepwidth_a = auc_frequency[digit][0];  
@@ -150,7 +194,8 @@ void dtmf_generate_tone(int8_t digit, uint16_t duration_ms)
         dtmf_enable_pwm();
 
         // Wait x ms
-        sleep_ms(duration_ms);
+		if(digit == DIGIT_2600){sleep_ms(DURATION_MS_2600);}
+        else{sleep_ms(duration_ms);}
     } 
     else if (digit == DIGIT_BEEP)
     {
@@ -184,6 +229,18 @@ void dtmf_generate_tone(int8_t digit, uint16_t duration_ms)
         _g_stepwidth_a = 51;    // G=784Hz
         sleep_ms(duration_ms / 3);
     }
+	else if (digit == DIGIT_TUNE_ASC2)
+    {
+        _g_stepwidth_a = 85;    // 1300Hz  
+        _g_stepwidth_b = 0;
+        dtmf_enable_pwm();
+        
+        sleep_ms(duration_ms / 6);
+        _g_stepwidth_a = 98;    // 1500Hz
+        sleep_ms(duration_ms / 6);
+        _g_stepwidth_a = 111;    // 1700Hz
+        sleep_ms(duration_ms / 6);
+    }
     else if (digit == DIGIT_TUNE_DESC)
     {
         _g_stepwidth_a = 51;    // G=784Hz
@@ -195,6 +252,18 @@ void dtmf_generate_tone(int8_t digit, uint16_t duration_ms)
         sleep_ms(duration_ms / 3);
         _g_stepwidth_a = 34;    // C=523.25Hz  
         sleep_ms(duration_ms / 3);
+    }
+    else if (digit == DIGIT_TUNE_DESC2)
+    {
+        _g_stepwidth_a = 111;    // 1700Hz
+        _g_stepwidth_b = 0;
+        dtmf_enable_pwm();
+
+        sleep_ms(duration_ms / 6);
+        _g_stepwidth_a = 98;    // 1500Hz
+        sleep_ms(duration_ms / 6);
+        _g_stepwidth_a = 85;    // 1300Hz   
+        sleep_ms(duration_ms / 6);
     }
 
     // Stop DTMF transmitting

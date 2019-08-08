@@ -28,11 +28,31 @@
 #define DIGIT_BEEP_LOW      -13
 #define DIGIT_TUNE_ASC      -11
 #define DIGIT_TUNE_DESC     -12
+#define DIGIT_TUNE_ASC2     -14
+#define DIGIT_TUNE_DESC2    -15
 #define DIGIT_OFF           -1
 #define DIGIT_STAR          10
 #define DIGIT_POUND         11
+#define DIGIT_PRE2600       12  //Use to play pending 2600 tone
+
+#define DIGIT_MF0           13
+#define DIGIT_MF1           14
+#define DIGIT_MF2           15
+#define DIGIT_MF3           16
+#define DIGIT_MF4           17
+#define DIGIT_MF5           18
+#define DIGIT_MF6           19
+#define DIGIT_MF7           20
+#define DIGIT_MF8           21
+#define DIGIT_MF9           22
+#define DIGIT_MFKP          23
+#define DIGIT_MFST          24
+
+#define DIGIT_2600          25
 
 #define DTMF_DURATION_MS    100
+#define MF_DURATION_MS      100
+#define DURATION_MS_2600    1500
 
 // PWM frequency = 4Mhz/256 = 15625Hz; overflow cycles per MS = 15
 #define T0_OVERFLOW_PER_MS  15

@@ -1,0 +1,82 @@
+Instructions
+==============
+
+Normal dialing
+==============
+
+Just pull the dial round from the desired number to the fingerstop and release immediately.
+
+Dialing * and #
+===============
+
+for * pull the dial from "1" and hold on the fingerstop for 2 seconds until you hear a beep, release, and a tone for * will be generated.
+
+For # do the same but use "2".
+
+Redial
+======
+
+Pull the dial around from "3" and hold on the fingerstop for 2 seconds. Release when you hear the beep, and the last number will be redialed.
+
+Speed dials
+===========
+
+There are 7 speed dial locations. 0, 4, 5, 6, 7, 8, 9. Pull the dial around  to the fingerstop and hold for 2 seconds, release when you hear the beep and the desired number will be dialed.
+
+Programming a speed dial
+========================
+
+Pull the number of the desired location around to the fingerstop and hold for 4 seconds, you will hear a quick rising-tone beep. Release the dial.
+
+You are now in programming mode. Now simply dial out the number you wish to store, releasing the dial immediately after each digit. You will hear a simple beep after digit. Once complete, hang up, the number is now saved.
+
+Up to 32 digits may be saved in each speed dial location. If you enter too many digits a warning beep sequence will sound.
+
+If you want to program another number without hanging up, just finish programming the last number, then select the next memory location to store by holding that digit against the finger stop. Allow the modes to cycle (single beep > rising beeps) until the rapidly rising beep tone is heard and release the dial. Program the number for this location as above.
+
+When doing this you will likely have your telephone exchange furiously beeping at you because you haven"t dialed a number. If annoying, you should dial a number known to be busy or with a recording, while programming.
+
+Hotline Feature
+===============
+
+The device can automatically dial a pre-programmed number when the receiver is taken off-hook.
+
+Program the desired hotline number into memory "0" as described above.
+
+Dial and hold the "1" digit against the finger stop for 4 seconds until a beep is heard. Release the dial. A series of slow ascending tones will sound, followed by one beep, indicating the hotdial feature is now active and set for one second delay from off-hook to dial.
+
+Repeat the process. Two beeps will be heard, indicating a two-second delay is active. Three and four second delays may be set in a similar fashion.
+
+After setting a four second delay, if the programming sequence is repeated, s slow descending series of tones will be heard. indicating the hotline feature is disabled.
+
+Hotline settings are saved in nonvolatile EEPROM memory.
+
+
+Adjusting tone length
+=====================
+The length of each DTMF tone may be set, from the default of 100 milliseconds. Supported lengths are 50ms, 100ms, 150ms, and 200ms.
+
+Dial and hold the "2" digit against the finger stop for 4 seconds until a beep is heard. Release the dial. A sequence of beeps will play, indicating the set digit duration. One beep = 50ms, two beeps = 100ms, three beeps = 150ms, and four beeps = 200ms. The setting wraps back from 200ms to 50ms.
+
+The tone duration setting is saved in nonvolatile EEPROM memory.
+
+
+MF (multifrequency) "Blue Box" mode (optional)
+==============================================
+The unit may be switched so that MF multifrequency trunk signalling tones are played, rather than standard DTMF.
+
+If equipped in software, dial and hold the "3" digit against the finger stop for 4 seconds until a beep is heard. Release the dial. A series of slow ascending tones will sound, indicating that MF mode is active.
+
+To return to normal DTMF mode, repeat the above procedure. Slow descending tones indicate MF mode is off.
+
+Manual dialing is done normally. To dial the "KP" or Key Pulse tone, pull the dial from "1" and hold on the fingerstop for 2 seconds until you hear a beep, release, and a tone for KP will be generated.
+
+For the ST or Start tone, do the same but use "2".
+
+To dial a long 2600Hz trunk seizure tone, pull the dial from "3" and hold on the fingerstop for 2 seconds until you hear a beep, release, and a long 2600 tone will be generated.
+
+Memories saved in MF mode will be played back using MF tones regardless of the current mode of the unit, DTMF or MF (the tone mode is saved along with the digit sequence).
+
+The 2600Hz tone may be saved to a memory like any other tone (in MF mode only, of course). A suitable delay will be inserted after the 2600Hz tone is played from memory to allow time for the trunk wink acknowledgement. 
+
+The hotline number, if programmed and used will always play back from memory "0". Memory "0" should be programmed while in DTMF mode when used for hotline operation. If programmed in MF mode, MF tones will be played when going off-hook, resulting in a failed call.
