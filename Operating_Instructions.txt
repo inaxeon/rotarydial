@@ -59,24 +59,3 @@ The length of each DTMF tone may be set, from the default of 100 milliseconds. S
 Dial and hold the "2" digit against the finger stop for 4 seconds until a beep is heard. Release the dial. A sequence of beeps will play, indicating the set digit duration. One beep = 50ms, two beeps = 100ms, three beeps = 150ms, and four beeps = 200ms. The setting wraps back from 200ms to 50ms.
 
 The tone duration setting is saved in nonvolatile EEPROM memory.
-
-
-MF (multifrequency) "Blue Box" mode (optional)
-==============================================
-The unit may be switched so that MF multifrequency trunk signalling tones are played, rather than standard DTMF.
-
-If equipped in software, dial and hold the "3" digit against the finger stop for 4 seconds until a beep is heard. Release the dial. A series of slow ascending tones will sound, indicating that MF mode is active.
-
-To return to normal DTMF mode, repeat the above procedure. Slow descending tones indicate MF mode is off.
-
-Manual dialing is done normally. To dial the "KP" or Key Pulse tone, pull the dial from "1" and hold on the fingerstop for 2 seconds until you hear a beep, release, and a tone for KP will be generated.
-
-For the ST or Start tone, do the same but use "2".
-
-To dial a long 2600Hz trunk seizure tone, pull the dial from "3" and hold on the fingerstop for 2 seconds until you hear a beep, release, and a long 2600 tone will be generated.
-
-Memories saved in MF mode will be played back using MF tones regardless of the current mode of the unit, DTMF or MF (the tone mode is saved along with the digit sequence).
-
-The 2600Hz tone may be saved to a memory like any other tone (in MF mode only, of course). A suitable delay will be inserted after the 2600Hz tone is played from memory to allow time for the trunk wink acknowledgement. 
-
-The hotline number, if programmed and used will always play back from memory "0". Memory "0" should be programmed while in DTMF mode when used for hotline operation. If programmed in MF mode, MF tones will be played when going off-hook, resulting in a failed call.
