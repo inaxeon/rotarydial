@@ -257,11 +257,13 @@ static void process_dialed_digit(runstate_t *rs)
         {
             // SF 1-*
             dtmf_generate_tone(DIGIT_STAR, DTMF_DURATION_MS);  
+            rs->state = STATE_DIAL;
         }
         else if (rs->dialed_digit == L2_POUND)
         {
             // SF 2-#
-            dtmf_generate_tone(DIGIT_POUND, DTMF_DURATION_MS);  
+            dtmf_generate_tone(DIGIT_POUND, DTMF_DURATION_MS);
+            rs->state = STATE_DIAL;
         }
         else if (rs->dialed_digit == L2_REDIAL)
         {
