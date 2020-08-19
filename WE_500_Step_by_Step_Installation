@@ -1,0 +1,27 @@
+Here are step-by step instructions for a Western Electric 500 set or equivalent. 
+Reference the schematic of the phone in we_500_schematic.jpg from Github.
+
+First, connect the two sets of dial contacts to the circuit.
+
+- In the phone, find the two white wires coming from the telephone dial.
+- Disconnect the white wire from the dial going to the terminal marked "GN" on the phone network. Leave other wires on "GN" connected.
+- Connect the wire that went to "GN" to the wire leading to Pin 6 of the ATTINY85.
+- Disconnect the other white wire from the dial going to the terminal marked "R" in the phone.
+- Connect this white wire to the negative side of the converter circuit or "ground".
+- Disconnect the blue wire from the telephone dial from terminal "F" in the phone.
+- Connect the blue wire to the wire leading to Pin 7 of the ATTINY85.
+- Disconnect the green wire from the terminal marked "RR" in the phone.
+- Connect this green wire to the negative side of the converter circuit or "ground".
+
+Next, connect the circuit into the line connections of the phone AFTER the hookswitch:
+
+- Disconnect the slate-colored wired with white bands coming from the hook switch contacts from the terminal marked "F" (possibly "RR") in the phone.
+- Connect this wire to the circuit wire going to one of the AC input points on the polarity guard diode bridge. This will be where an anode and cathode connection from two diodes meet.
+- Disconnect the slate-colored wired with brown bands coming from the hook switch contacts from the terminal marked "C" in the phone.
+- Connect this wire to the circuit wire going to the other AC input points on the polarity guard diode bridge. This will be where an anode and cathode connection from two diodes meet.
+- Connect a wire from the negative or "ground" point of the circuit to the terminal marked "C" in the phone.
+- Connect the wire leading to the anode of the 5.1 volt zener diode in the circuit to the terminal marked "RR" in the phone.
+
+That's it! The circuit should be active when you pick up the phone. You should hear clicks when dialing, followed by the corresponding DTMF tone.
+
+Verify that incoming calls ring the phone.
