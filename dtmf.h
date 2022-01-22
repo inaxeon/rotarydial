@@ -28,6 +28,8 @@
 #define DIGIT_BEEP_LOW      -13
 #define DIGIT_TUNE_ASC      -11
 #define DIGIT_TUNE_DESC     -12
+#define DIGIT_TUNE_ASC2     -14
+#define DIGIT_TUNE_DESC2    -15
 #define DIGIT_OFF           -1
 #define DIGIT_STAR          10
 #define DIGIT_POUND         11
