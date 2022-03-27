@@ -23,6 +23,7 @@
 
 // Uncomment to build with reverse dial
 //#define NZ_DIAL
+#define SE_DIAL
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -160,6 +161,8 @@ int main(void)
 #ifdef NZ_DIAL
                     // NZPO Phones only. 0 is same as GPO but 1-9 are reversed.
                     rs->dialed_digit = (10 - rs->dialed_digit);
+#elif SE_DIAL
+                    rs->dialed_digit = rs->dialed_digit - 1;                                        
 #else
                     if (rs->dialed_digit == 10)
                         rs->dialed_digit = 0; // 10 pulses => 0

@@ -14,7 +14,7 @@ COREUTILS  = C:/Projects/coreutils/bin/
 
 DEVICE     = attiny85
 CLOCK      = 4000000
-PROGRAMMER = -c stk500 -P COM10 
+PROGRAMMER = -c usbasp -P COM10 
 SRCS       = main.c dtmf.c
 OBJS       = $(SRCS:.c=.o)
 FUSES      = -U lfuse:w:0xFD:m -U hfuse:w:0xDF:m -U efuse:w:0xFF:m
